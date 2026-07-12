@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Предложения">
+<meta name="theme-color" content="#6366f1">
+<link rel="manifest" href="./manifest.json">
+<title>Английские предложения</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+:root {
+  --bg:#0f172a; --card:#1e293b; --card2:#273548; --ink:#f1f5f9;
+  --muted:#94a3b8; --accent:#6366f1; --accent2:#10b981;
+  --danger:#ef4444; --border:#334155;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:calc(20px + var(--safe-top)) 16px calc(20px + var(--safe-bottom))}
+
+/* Header */
+.hdr{width:100%;max-width:560px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.hdr h1{font-size:1.1rem;font-weight:800;color:var(--ink)}
+.hdr h1 span{color:var(--accent)}
+.score-pill{background:var(--card);border:1px solid var(--border);border-radius:100px;
+  padding:6px 14px;font-size:0.75rem;font-weight:700;color:var(--accent2)}
+
+/* Task card */
+.task-card{background:var(--card);border:1px solid var(--border);border-radius:24px;
+  width:100%;max-width:560px;padding:24px 20px;margin-bottom:16px}
+.task-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.badge{padding:4px 12px;border-radius:100px;font-size:0.72rem;font-weight:700;letter-spacing:0.5px}
+.badge-time{background:#1d3a5f;color:#60a5fa}
+.badge-person{background:#1a3a2a;color:#34d399}
+.badge-form{background:#3b1f5e;color:#c084fc}
+
+.verb-display{text-align:center;margin-bottom:20px}
+.verb-en{font-size:2.8rem;font-weight:800;color:var(--ink);line-height:1}
+.verb-trans{font-size:0.95rem;font-weight:500;color:var(--accent);margin-top:4px}
+.verb-hint{font-size:0.78rem;color:var(--muted);margin-top:6px;font-style:italic}
+
+/* Task description */
+.task-desc{background:var(--card2);border-radius:14px;padding:14px 16px;margin-bottom:20px;
+  font-size:0.9rem;line-height:1.6;color:var(--muted)}
+.task-desc strong{color:var(--ink)}
+
+/* Input */
+.input-wrap{position:relative;margin-bottom:12px}
+.answer-input{width:100%;background:var(--card2);border:2px solid var(--border);
+  color:var(--ink);font-family:'Inter',sans-serif;font-size:1rem;font-weight:500;
+  padding:14px 16px;border-radius:14px;outline:none;transition:border-color 0.2s;
+  -webkit-appearance:none}
+.answer-input:focus{border-color:var(--accent)}
+.answer-input.ok{border-color:var(--accent2);background:#0d2b1f}
+.answer-input.err{border-color:var(--danger);background:#2a0e0e}
+.answer-input::placeholder{color:var(--border)}
+
+/* Buttons */
+.btn-row{display:flex;gap:10px;margin-bottom:16px}
+.btn{flex:1;border:none;border-radius:14px;padding:14px;font-family:'Inter',sans-serif;
+  font-size:0.85rem;font-weight:700;cursor:pointer;-webkit-appearance:none;
+  touch-action:manipulation;transition:opacity 0.15s}
+.btn:active{opacity:0.8}
+.btn-check{background:var(--accent);color:#fff}
+.btn-skip{background:var(--card2);color:var(--muted);border:1px solid var(--border)}
+
+/* Feedback */
+.feedback{border-radius:14px;padding:14px 16px;margin-bottom:16px;
+  font-size:0.9rem;line-height:1.6;display:none}
+.feedback.show{display:block}
+.feedback.ok{background:#0d2b1f;border:1px solid var(--accent2);color:var(--accent2)}
+.feedback.err{background:#2a0e0e;border:1px solid var(--danger);color:#fca5a5}
+.feedback strong{font-size:1rem}
+.correct-ans{margin-top:8px;color:var(--ink);font-size:0.95rem;font-weight:600;
+  background:var(--card);padding:10px 14px;border-radius:10px;letter-spacing:0.3px}
+
+/* Speech section */
+.speech-section{background:var(--card2);border:1px solid var(--border);border-radius:16px;
+  padding:16px;display:none;margin-bottom:16px}
+.speech-section.show{display:block}
+.speech-title{font-size:0.75rem;font-weight:700;color:var(--muted);letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:12px}
+.speech-btns{display:flex;gap:10px;margin-bottom:12px}
+.btn-mic{flex:1;background:var(--danger);color:#fff;border:none;border-radius:14px;
+  padding:14px;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:700;
+  cursor:pointer;-webkit-appearance:none;touch-action:manipulation;transition:all 0.2s}
+.btn-mic.recording{background:#7f1d1d;animation:pulse 1s infinite}
+.btn-listen{flex:1;background:var(--card);color:var(--muted);border:1px solid var(--border);
+  border-radius:14px;padding:14px;font-family:'Inter',sans-serif;font-size:0.85rem;
+  font-weight:700;cursor:pointer;-webkit-appearance:none;touch-action:manipulation}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.speech-result{font-size:0.85rem;color:var(--muted);min-height:20px;margin-bottom:10px;
+  font-style:italic}
+.speech-score{font-size:1rem;font-weight:700;display:none}
+.speech-score.show{display:block}
+.speech-score.great{color:var(--accent2)}
+.speech-score.ok-score{color:#fbbf24}
+.speech-score.bad{color:var(--danger)}
+
+/* Next btn fixed */
+.next-btn{position:fixed;bottom:0;left:0;right:0;background:var(--accent);color:#fff;
+  border:none;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:700;
+  padding:18px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  cursor:pointer;-webkit-appearance:none;touch-action:manipulation;
+  display:none;z-index:100;letter-spacing:0.3px}
+.next-btn.show{display:block}
+.spacer{height:0;transition:height 0.2s}
+.spacer.show{height:80px}
+
+/* Result screen */
+.result{text-align:center;width:100%;max-width:560px;padding:20px 0;display:none}
+.result.show{display:flex;flex-direction:column;align-items:center}
+.result-emoji{font-size:4rem;margin-bottom:12px}
+.result h2{font-size:1.6rem;font-weight:800;color:var(--ink);margin-bottom:8px}
+.result-score{font-size:3.5rem;font-weight:800;color:var(--accent);line-height:1;margin:8px 0}
+.result p{color:var(--muted);margin-bottom:24px}
+.rbtn{background:var(--accent);color:#fff;border:none;font-family:'Inter',sans-serif;
+  font-size:0.9rem;font-weight:700;padding:16px 32px;border-radius:14px;
+  cursor:pointer;margin:6px;-webkit-appearance:none;width:100%;max-width:280px}
+.rbtn.out{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+
+/* Progress */
+.progress{width:100%;max-width:560px;margin-bottom:20px}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.4s}
+.progress-text{display:flex;justify-content:space-between;font-size:0.72rem;
+  color:var(--muted);margin-top:6px}
+
+/* Filter */
+.filters{width:100%;max-width:560px;margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap}
+.flt{background:var(--card);border:1px solid var(--border);color:var(--muted);
+  font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:600;padding:6px 14px;
+  border-radius:100px;cursor:pointer;-webkit-appearance:none}
+.flt.active{border-color:var(--accent);color:var(--accent);background:#1e1b4b}
+
+@media(max-width:400px){
+  .verb-en{font-size:2.2rem}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>350 <span>глаголов</span></h1>
+  <div class="score-pill" id="scorePill">0 / 0</div>
+</div>
+
+<div class="filters" id="filters"></div>
+
+<div class="progress">
+  <div class="progress-bar"><div class="progress-fill" id="pFill"></div></div>
+  <div class="progress-text">
+    <span id="pText">Вопрос 1 из 15</span>
+    <span id="pAcc">Точность: 0%</span>
+  </div>
+</div>
+
+<div class="task-card" id="taskCard">
+  <div class="task-meta" id="taskMeta"></div>
+  <div class="verb-display">
+    <div class="verb-en" id="verbEn"></div>
+    <div class="verb-trans" id="verbTrans"></div>
+    <div class="verb-hint" id="verbHint"></div>
+  </div>
+  <div class="task-desc" id="taskDesc"></div>
+  <div class="input-wrap">
+    <input class="answer-input" id="answerInput" type="text"
+      placeholder="Напишите предложение..."
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-check" id="checkBtn">Проверить ✓</button>
+    <button class="btn btn-skip" id="skipBtn">Пропустить</button>
+  </div>
+  <div class="feedback" id="feedback"></div>
+  <div class="speech-section" id="speechSection">
+    <div class="speech-title">🎤 Произнесите предложение</div>
+    <div class="speech-btns">
+      <button class="btn-mic" id="micBtn">🎤 Начать запись</button>
+      <button class="btn-listen" id="listenBtn">🔊 Эталон</button>
+    </div>
+    <div class="speech-result" id="speechResult">Нажмите 🎤 и произнесите предложение</div>
+    <div class="speech-score" id="speechScore"></div>
+  </div>
+</div>
+
+<div class="spacer" id="spacer"></div>
+<button class="next-btn" id="nextBtn">Дальше →</button>
+
+<div class="result" id="result">
+  <div class="result-emoji" id="rEmoji">🎉</div>
+  <h2>Раунд завершён!</h2>
+  <div class="result-score" id="rScore"></div>
+  <p id="rMsg"></p>
+  <button class="rbtn" onclick="restart()">Ещё раз</button>
+  <button class="rbtn out" onclick="restartRandom()">Другие слова</button>
+</div>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
+
+var ALL = [
+  {e:"like",t:"[laɪk]",r:"нравиться"},{e:"want",t:"[wɒnt]",r:"хотеть"},{e:"need",t:"[niːd]",r:"нуждаться"},{e:"get",t:"[ɡet]",r:"получать"},{e:"listen",t:"[ˈlɪsən]",r:"слушать"},
+  {e:"ask",t:"[ɑːsk]",r:"спрашивать"},{e:"start",t:"[stɑːt]",r:"начинать"},{e:"love",t:"[lʌv]",r:"любить"},{e:"finish",t:"[ˈfɪnɪʃ]",r:"заканчивать"},{e:"come",t:"[kʌm]",r:"приходить"},
+  {e:"understand",t:"[ˌʌndəˈstænd]",r:"понимать"},{e:"live",t:"[lɪv]",r:"жить"},{e:"tell",t:"[tel]",r:"рассказывать"},{e:"put",t:"[pʊt]",r:"класть"},{e:"hate",t:"[heɪt]",r:"ненавидеть"},
+  {e:"work",t:"[wɜːk]",r:"работать"},{e:"teach",t:"[tiːtʃ]",r:"учить"},{e:"play",t:"[pleɪ]",r:"играть"},{e:"buy",t:"[baɪ]",r:"покупать"},{e:"see",t:"[siː]",r:"видеть"},
+  {e:"learn",t:"[lɜːn]",r:"учиться"},{e:"look",t:"[lʊk]",r:"смотреть"},{e:"hear",t:"[hɪə]",r:"слышать"},{e:"let",t:"[let]",r:"позволять"},{e:"help",t:"[help]",r:"помогать"},
+  {e:"read",t:"[riːd]",r:"читать"},{e:"wait",t:"[weɪt]",r:"ждать"},{e:"explain",t:"[ɪkˈspleɪn]",r:"объяснять"},{e:"drink",t:"[drɪŋk]",r:"пить"},{e:"think",t:"[θɪŋk]",r:"думать"},
+  {e:"sleep",t:"[sliːp]",r:"спать"},{e:"know",t:"[nəʊ]",r:"знать"},{e:"speak",t:"[spiːk]",r:"говорить"},{e:"eat",t:"[iːt]",r:"есть"},{e:"write",t:"[raɪt]",r:"писать"},
+  {e:"make",t:"[meɪk]",r:"делать"},{e:"fight",t:"[faɪt]",r:"драться"},{e:"do",t:"[duː]",r:"делать"},{e:"give",t:"[ɡɪv]",r:"давать"},{e:"drive",t:"[draɪv]",r:"водить"},
+  {e:"rest",t:"[rest]",r:"отдыхать"},{e:"take",t:"[teɪk]",r:"брать"},{e:"sit",t:"[sɪt]",r:"сидеть"},{e:"hope",t:"[həʊp]",r:"надеяться"},{e:"pay",t:"[peɪ]",r:"платить"},
+  {e:"run",t:"[rʌn]",r:"бежать"},{e:"go",t:"[ɡəʊ]",r:"идти"},{e:"stay",t:"[steɪ]",r:"оставаться"},{e:"have",t:"[hæv]",r:"иметь"},{e:"answer",t:"[ˈɑːnsə]",r:"отвечать"},
+  {e:"believe",t:"[bɪˈliːv]",r:"верить"},{e:"happen",t:"[ˈhæpən]",r:"случаться"},{e:"bring",t:"[brɪŋ]",r:"приносить"},{e:"allow",t:"[əˈlaʊ]",r:"разрешать"},{e:"forbid",t:"[fəˈbɪd]",r:"запрещать"},
+  {e:"try",t:"[traɪ]",r:"пробовать"},{e:"find",t:"[faɪnd]",r:"находить"},{e:"say",t:"[seɪ]",r:"говорить"},{e:"look for",t:"[lʊk fɔː]",r:"искать"},{e:"fly",t:"[flaɪ]",r:"летать"},
+  {e:"compare",t:"[kəmˈpeə]",r:"сравнивать"},{e:"smile",t:"[smaɪl]",r:"улыбаться"},{e:"use",t:"[juːz]",r:"использовать"},{e:"call",t:"[kɔːl]",r:"звонить"},{e:"laugh",t:"[lɑːf]",r:"смеяться"},
+  {e:"break",t:"[breɪk]",r:"ломать"},{e:"stand",t:"[stænd]",r:"стоять"},{e:"demand",t:"[dɪˈmɑːnd]",r:"требовать"},{e:"pour",t:"[pɔː]",r:"наливать"},{e:"clean",t:"[kliːn]",r:"убирать"},
+  {e:"count",t:"[kaʊnt]",r:"считать"},{e:"dress",t:"[dres]",r:"одеваться"},{e:"walk",t:"[wɔːk]",r:"ходить"},{e:"catch",t:"[kætʃ]",r:"ловить"},{e:"command",t:"[kəˈmɑːnd]",r:"командовать"},
+  {e:"manage",t:"[ˈmænɪdʒ]",r:"справляться"},{e:"build",t:"[bɪld]",r:"строить"},{e:"agree",t:"[əˈɡriː]",r:"соглашаться"},{e:"recommend",t:"[ˌrekəˈmend]",r:"рекомендовать"},{e:"show",t:"[ʃəʊ]",r:"показывать"},
+  {e:"sell",t:"[sel]",r:"продавать"},{e:"wash",t:"[wɒʃ]",r:"мыть"},{e:"keep",t:"[kiːp]",r:"хранить"},{e:"wear",t:"[weə]",r:"носить"},{e:"spend",t:"[spend]",r:"тратить"},
+  {e:"win",t:"[wɪn]",r:"побеждать"},{e:"forget",t:"[fəˈɡet]",r:"забывать"},{e:"talk",t:"[tɔːk]",r:"разговаривать"},{e:"promise",t:"[ˈprɒmɪs]",r:"обещать"},{e:"lose",t:"[luːz]",r:"терять"},
+  {e:"remember",t:"[rɪˈmembə]",r:"помнить"},{e:"mean",t:"[miːn]",r:"означать"},{e:"seem",t:"[siːm]",r:"казаться"},{e:"visit",t:"[ˈvɪzɪt]",r:"посещать"},{e:"prefer",t:"[prɪˈfɜː]",r:"предпочитать"},
+  {e:"thank",t:"[θæŋk]",r:"благодарить"},{e:"study",t:"[ˈstʌdi]",r:"изучать"},{e:"refuse",t:"[rɪˈfjuːz]",r:"отказываться"},{e:"meet",t:"[miːt]",r:"встречать"},{e:"send",t:"[send]",r:"отправлять"},
+  {e:"apply",t:"[əˈplaɪ]",r:"применять"},{e:"punish",t:"[ˈpʌnɪʃ]",r:"наказывать"},{e:"excuse",t:"[ɪkˈskjuːz]",r:"извинять"},{e:"arrange",t:"[əˈreɪndʒ]",r:"организовывать"},{e:"deceive",t:"[dɪˈsiːv]",r:"обманывать"},
+  {e:"suit",t:"[suːt]",r:"подходить"},{e:"feed",t:"[fiːd]",r:"кормить"},{e:"lift",t:"[lɪft]",r:"поднимать"},{e:"steal",t:"[stiːl]",r:"красть"},{e:"cook",t:"[kʊk]",r:"готовить"},
+  {e:"wonder",t:"[ˈwʌndə]",r:"удивляться"},{e:"cut",t:"[kʌt]",r:"резать"},{e:"kill",t:"[kɪl]",r:"убивать"},{e:"check",t:"[tʃek]",r:"проверять"},{e:"die",t:"[daɪ]",r:"умирать"},
+  {e:"advise",t:"[ədˈvaɪz]",r:"советовать"},{e:"shoot",t:"[ʃuːt]",r:"стрелять"},{e:"worry",t:"[ˈwʌri]",r:"беспокоиться"},{e:"present",t:"[prɪˈzent]",r:"представлять"},{e:"hold",t:"[həʊld]",r:"держать"},
+  {e:"make clear",t:"[meɪk klɪə]",r:"объяснять"},{e:"change",t:"[tʃeɪndʒ]",r:"менять"},{e:"argue",t:"[ˈɑːɡjuː]",r:"спорить"},{e:"shout",t:"[ʃaʊt]",r:"кричать"},{e:"open",t:"[ˈəʊpən]",r:"открывать"},
+  {e:"feel",t:"[fiːl]",r:"чувствовать"},{e:"leave",t:"[liːv]",r:"уходить"},{e:"depend",t:"[dɪˈpend]",r:"зависеть"},{e:"upset",t:"[ʌpˈset]",r:"расстраивать"},{e:"fall",t:"[fɔːl]",r:"падать"},
+  {e:"sign",t:"[saɪn]",r:"подписывать"},{e:"dream",t:"[driːm]",r:"мечтать"},{e:"choose",t:"[tʃuːz]",r:"выбирать"},{e:"lie",t:"[laɪ]",r:"лгать / лежать"},{e:"deal",t:"[diːl]",r:"договариваться"},
+  {e:"enter",t:"[ˈentə]",r:"входить"},{e:"convince",t:"[kənˈvɪns]",r:"убеждать"},{e:"prove",t:"[pruːv]",r:"доказывать"},{e:"decide",t:"[dɪˈsaɪd]",r:"решать"},{e:"repeat",t:"[rɪˈpiːt]",r:"повторять"},
+  {e:"scare",t:"[skeə]",r:"пугать"},{e:"doubt",t:"[daʊt]",r:"сомневаться"},{e:"watch",t:"[wɒtʃ]",r:"наблюдать"},{e:"harm",t:"[hɑːm]",r:"вредить"},{e:"carry",t:"[ˈkæri]",r:"нести"},
+  {e:"fail",t:"[feɪl]",r:"проваливаться"},{e:"close",t:"[kləʊz]",r:"закрывать"},{e:"spoil",t:"[spɔɪl]",r:"портить"},{e:"hurry",t:"[ˈhʌri]",r:"торопиться"},{e:"save",t:"[seɪv]",r:"спасать"},
+  {e:"move",t:"[muːv]",r:"двигаться"},{e:"breathe",t:"[briːð]",r:"дышать"},{e:"cry",t:"[kraɪ]",r:"плакать"},{e:"improve",t:"[ɪmˈpruːv]",r:"улучшать"},{e:"disturb",t:"[dɪˈstɜːb]",r:"беспокоить"},
+  {e:"hurt",t:"[hɜːt]",r:"причинять боль"},{e:"translate",t:"[trænsˈleɪt]",r:"переводить"},{e:"respect",t:"[rɪˈspekt]",r:"уважать"},{e:"begin",t:"[bɪˈɡɪn]",r:"начинать"},{e:"matter",t:"[ˈmætə]",r:"иметь значение"},
+  {e:"increase",t:"[ɪnˈkriːs]",r:"увеличивать"},{e:"miss",t:"[mɪs]",r:"скучать"},{e:"destroy",t:"[dɪˈstrɔɪ]",r:"разрушать"},{e:"throw",t:"[θrəʊ]",r:"бросать"},{e:"defend",t:"[dɪˈfend]",r:"защищать"},
+  {e:"touch",t:"[tʌtʃ]",r:"трогать"},{e:"strive",t:"[straɪv]",r:"стремиться"},{e:"compete",t:"[kəmˈpiːt]",r:"соревноваться"},{e:"wish",t:"[wɪʃ]",r:"желать"},{e:"succeed",t:"[səkˈsiːd]",r:"добиваться успеха"},
+  {e:"prepare",t:"[prɪˈpeə]",r:"готовиться"},{e:"order",t:"[ˈɔːdə]",r:"заказывать"},{e:"appear",t:"[əˈpɪə]",r:"появляться"},{e:"owe",t:"[əʊ]",r:"быть должным"},{e:"cost",t:"[kɒst]",r:"стоить"},
+  {e:"exist",t:"[ɪɡˈzɪst]",r:"существовать"},{e:"invite",t:"[ɪnˈvaɪt]",r:"приглашать"},{e:"knock",t:"[nɒk]",r:"стучать"},{e:"repair",t:"[rɪˈpeə]",r:"ремонтировать"},{e:"hide",t:"[haɪd]",r:"прятать"},
+  {e:"pass",t:"[pɑːs]",r:"проходить"},{e:"forgive",t:"[fəˈɡɪv]",r:"прощать"},{e:"grow",t:"[ɡrəʊ]",r:"расти"},{e:"burn",t:"[bɜːn]",r:"гореть"},{e:"remind",t:"[rɪˈmaɪnd]",r:"напоминать"},
+  {e:"turn",t:"[tɜːn]",r:"поворачивать"},{e:"annoy",t:"[əˈnɔɪ]",r:"раздражать"},{e:"complain",t:"[kəmˈpleɪn]",r:"жаловаться"},{e:"pretend",t:"[prɪˈtend]",r:"притворяться"},{e:"connect",t:"[kəˈnekt]",r:"соединять"},
+  {e:"practice",t:"[ˈpræktɪs]",r:"практиковаться"},{e:"switch on",t:"[swɪtʃ ɒn]",r:"включать"},{e:"describe",t:"[dɪˈskraɪb]",r:"описывать"},{e:"put on",t:"[pʊt ɒn]",r:"надевать"},{e:"solve",t:"[sɒlv]",r:"решать"},
+  {e:"smell",t:"[smel]",r:"пахнуть"},{e:"lead",t:"[liːd]",r:"вести"},{e:"follow",t:"[ˈfɒləʊ]",r:"следовать"},{e:"sound",t:"[saʊnd]",r:"звучать"},{e:"travel",t:"[ˈtrævəl]",r:"путешествовать"},
+  {e:"enjoy",t:"[ɪnˈdʒɔɪ]",r:"наслаждаться"},{e:"discuss",t:"[dɪˈskʌs]",r:"обсуждать"},{e:"congratulate",t:"[kənˈɡrætʃuleɪt]",r:"поздравлять"},{e:"guess",t:"[ɡes]",r:"угадывать"},{e:"conceal",t:"[kənˈsiːl]",r:"скрывать"},
+  {e:"cough",t:"[kɒf]",r:"кашлять"},{e:"pull",t:"[pʊl]",r:"тянуть"},{e:"insist",t:"[ɪnˈsɪst]",r:"настаивать"},{e:"tear",t:"[teə]",r:"рвать"},{e:"push",t:"[pʊʃ]",r:"толкать"},
+  {e:"sneeze",t:"[sniːz]",r:"чихать"},{e:"achieve",t:"[əˈtʃiːv]",r:"достигать"},{e:"envy",t:"[ˈenvi]",r:"завидовать"},{e:"hint",t:"[hɪnt]",r:"намекать"},{e:"own",t:"[əʊn]",r:"владеть"},
+  {e:"multiply",t:"[ˈmʌltɪplaɪ]",r:"умножать"},{e:"blame",t:"[bleɪm]",r:"винить"},{e:"concern",t:"[kənˈsɜːn]",r:"беспокоить"},{e:"suffer",t:"[ˈsʌfə]",r:"страдать"},{e:"behave",t:"[bɪˈheɪv]",r:"вести себя"},
+  {e:"add",t:"[æd]",r:"добавлять"},{e:"fix",t:"[fɪks]",r:"чинить"},{e:"become",t:"[bɪˈkʌm]",r:"становиться"},{e:"divide",t:"[dɪˈvaɪd]",r:"делить"},{e:"accept",t:"[əkˈsept]",r:"принимать"},
+  {e:"differ",t:"[ˈdɪfə]",r:"отличаться"},{e:"mix",t:"[mɪks]",r:"смешивать"},{e:"paint",t:"[peɪnt]",r:"рисовать"},{e:"notice",t:"[ˈnəʊtɪs]",r:"замечать"},{e:"bite",t:"[baɪt]",r:"кусать"},
+  {e:"subtract",t:"[səbˈtrækt]",r:"вычитать"},{e:"belong",t:"[bɪˈlɒŋ]",r:"принадлежать"},{e:"swear",t:"[sweə]",r:"клясться"},{e:"care",t:"[keə]",r:"заботиться"},{e:"offend",t:"[əˈfend]",r:"обижать"},
+  {e:"imagine",t:"[ɪˈmædʒɪn]",r:"представлять"},{e:"attack",t:"[əˈtæk]",r:"атаковать"},{e:"hit",t:"[hɪt]",r:"ударять"},{e:"avoid",t:"[əˈvɔɪd]",r:"избегать"},{e:"please",t:"[pliːz]",r:"радовать"},
+  {e:"draw",t:"[drɔː]",r:"рисовать"},{e:"invent",t:"[ɪnˈvent]",r:"изобретать"},{e:"get rid",t:"[ɡet rɪd]",r:"избавляться"},{e:"beat",t:"[biːt]",r:"побеждать"},{e:"fill",t:"[fɪl]",r:"наполнять"},
+  {e:"chew",t:"[tʃuː]",r:"жевать"},{e:"force",t:"[fɔːs]",r:"заставлять"},{e:"set",t:"[set]",r:"устанавливать"},{e:"pray",t:"[preɪ]",r:"молиться"},{e:"amaze",t:"[əˈmeɪz]",r:"удивлять"},
+  {e:"celebrate",t:"[ˈselɪbreɪt]",r:"праздновать"},{e:"hire",t:"[haɪə]",r:"нанимать"},{e:"seek",t:"[siːk]",r:"искать"},{e:"cause",t:"[kɔːz]",r:"вызывать"},{e:"praise",t:"[preɪz]",r:"хвалить"},
+  {e:"consist",t:"[kənˈsɪst]",r:"состоять"},{e:"earn",t:"[ɜːn]",r:"зарабатывать"},{e:"consider",t:"[kənˈsɪdə]",r:"рассматривать"},{e:"suspect",t:"[səˈspekt]",r:"подозревать"},{e:"survive",t:"[səˈvaɪv]",r:"выживать"},
+  {e:"interrupt",t:"[ˌɪntəˈrʌpt]",r:"прерывать"},{e:"brag",t:"[bræɡ]",r:"хвастаться"},{e:"rob",t:"[rɒb]",r:"грабить"},{e:"create",t:"[kriˈeɪt]",r:"создавать"},{e:"act",t:"[ækt]",r:"действовать"},
+  {e:"continue",t:"[kənˈtɪnjuː]",r:"продолжать"},{e:"spell",t:"[spel]",r:"произносить по буквам"},{e:"quit",t:"[kwɪt]",r:"бросать"},{e:"warn",t:"[wɔːn]",r:"предупреждать"},{e:"threaten",t:"[ˈθretn]",r:"угрожать"},
+  {e:"award",t:"[əˈwɔːd]",r:"награждать"},{e:"rent",t:"[rent]",r:"арендовать"},{e:"offer",t:"[ˈɒfə]",r:"предлагать"},{e:"develop",t:"[dɪˈveləp]",r:"развивать"},{e:"afford",t:"[əˈfɔːd]",r:"позволить себе"},
+  {e:"wake",t:"[weɪk]",r:"просыпаться"},{e:"marry",t:"[ˈmæri]",r:"жениться"},{e:"cover",t:"[ˈkʌvə]",r:"покрывать"},{e:"express",t:"[ɪkˈspres]",r:"выражать"},{e:"yawn",t:"[jɔːn]",r:"зевать"},
+  {e:"treat",t:"[triːt]",r:"угощать"},{e:"wound",t:"[wuːnd]",r:"ранить"},{e:"fulfill",t:"[fʊlˈfɪl]",r:"выполнять"},{e:"hang",t:"[hæŋ]",r:"вешать"},{e:"delay",t:"[dɪˈleɪ]",r:"откладывать"},
+  {e:"beware",t:"[bɪˈweə]",r:"остерегаться"},{e:"deny",t:"[dɪˈnaɪ]",r:"отрицать"},{e:"object",t:"[əbˈdʒekt]",r:"возражать"},{e:"bake",t:"[beɪk]",r:"печь"},{e:"support",t:"[səˈpɔːt]",r:"поддерживать"},
+  {e:"mention",t:"[ˈmenʃən]",r:"упоминать"},{e:"realize",t:"[ˈrɪəlaɪz]",r:"осознавать"},{e:"dare",t:"[deə]",r:"осмеливаться"},{e:"invest",t:"[ɪnˈvest]",r:"инвестировать"},{e:"assemble",t:"[əˈsembəl]",r:"собирать"},
+  {e:"spit",t:"[spɪt]",r:"плевать"},{e:"join",t:"[dʒɔɪn]",r:"присоединяться"},{e:"advertise",t:"[ˈædvətaɪz]",r:"рекламировать"},{e:"interfere",t:"[ˌɪntəˈfɪə]",r:"вмешиваться"},{e:"influence",t:"[ˈɪnfluəns]",r:"влиять"},
+  {e:"overcome",t:"[ˌəʊvəˈkʌm]",r:"преодолевать"},{e:"endure",t:"[ɪnˈdjʊə]",r:"терпеть"},{e:"cure",t:"[kjʊə]",r:"лечить"},{e:"deprive",t:"[dɪˈpraɪv]",r:"лишать"},{e:"sigh",t:"[saɪ]",r:"вздыхать"},
+  {e:"nod",t:"[nɒd]",r:"кивать"},{e:"shake",t:"[ʃeɪk]",r:"трясти"},{e:"deliver",t:"[dɪˈlɪvə]",r:"доставлять"},{e:"surrender",t:"[səˈrendə]",r:"сдаваться"},{e:"release",t:"[rɪˈliːs]",r:"освобождать"},
+  {e:"obey",t:"[əˈbeɪ]",r:"подчиняться"},{e:"bless",t:"[bles]",r:"благословлять"},{e:"enroll",t:"[ɪnˈrəʊl]",r:"записываться"},{e:"mock",t:"[mɒk]",r:"насмехаться"},{e:"engage",t:"[ɪnˈɡeɪdʒ]",r:"вовлекать"},
+  {e:"inspire",t:"[ɪnˈspaɪə]",r:"вдохновлять"},{e:"flee",t:"[fliː]",r:"убегать"},{e:"blow",t:"[bləʊ]",r:"дуть"},{e:"scratch",t:"[skrætʃ]",r:"царапать"},{e:"wrap",t:"[ræp]",r:"заворачивать"},
+  {e:"quarrel",t:"[ˈkwɒrəl]",r:"ссориться"},{e:"whistle",t:"[ˈwɪsəl]",r:"свистеть"},{e:"vote",t:"[vəʊt]",r:"голосовать"},{e:"attract",t:"[əˈtrækt]",r:"привлекать"},{e:"distract",t:"[dɪˈstrækt]",r:"отвлекать"},
+  {e:"whisper",t:"[ˈwɪspə]",r:"шептать"},{e:"replace",t:"[rɪˈpleɪs]",r:"заменять"},{e:"condemn",t:"[kənˈdem]",r:"осуждать"},{e:"hesitate",t:"[ˈhezɪteɪt]",r:"колебаться"},{e:"pick",t:"[pɪk]",r:"выбирать"},
+  {e:"impress",t:"[ɪmˈpres]",r:"впечатлять"},{e:"resist",t:"[rɪˈzɪst]",r:"сопротивляться"},{e:"repel",t:"[rɪˈpel]",r:"отталкивать"},{e:"combine",t:"[kəmˈbaɪn]",r:"сочетать"},{e:"accompany",t:"[əˈkʌmpəni]",r:"сопровождать"},
+  {e:"measure",t:"[ˈmeʒə]",r:"измерять"},{e:"lend",t:"[lend]",r:"одалживать"},{e:"borrow",t:"[ˈbɒrəʊ]",r:"брать в долг"},{e:"dig",t:"[dɪɡ]",r:"копать"},{e:"encounter",t:"[ɪnˈkaʊntə]",r:"сталкиваться"},
+  {e:"defeat",t:"[dɪˈfiːt]",r:"побеждать"},{e:"load",t:"[ləʊd]",r:"загружать"},{e:"approve",t:"[əˈpruːv]",r:"одобрять"},{e:"regret",t:"[rɪˈɡret]",r:"сожалеть"},{e:"indicate",t:"[ˈɪndɪkeɪt]",r:"указывать"},
+  {e:"entertain",t:"[ˌentəˈteɪn]",r:"развлекать"},{e:"supervise",t:"[ˈsuːpəvaɪz]",r:"контролировать"},{e:"pronounce",t:"[prəˈnaʊns]",r:"произносить"},{e:"disapprove",t:"[ˌdɪsəˈpruːv]",r:"не одобрять"},{e:"itch",t:"[ɪtʃ]",r:"чесаться"}
+];
+
+// ── TASK TEMPLATES ──────────────────────────────────────────────
+// 9 task types from the table
+var TASKS = [
+  // PRESENT SIMPLE
+  {time:'Настоящее',timeEn:'Present Simple',form:'Утверждение',persons:['I','You','We','They'],aux:'',neg:false,q:false},
+  {time:'Настоящее',timeEn:'Present Simple',form:'Утверждение',persons:['He','She','It'],aux:'',neg:false,q:false,s:true},
+  {time:'Настоящее',timeEn:'Present Simple',form:'Отрицание',persons:['I','You','We','They'],aux:'do not',neg:true,q:false},
+  {time:'Настоящее',timeEn:'Present Simple',form:'Отрицание',persons:['He','She','It'],aux:'does not',neg:true,q:false},
+  {time:'Настоящее',timeEn:'Present Simple',form:'Вопрос',persons:['I','You','We','They'],aux:'Do',neg:false,q:true},
+  {time:'Настоящее',timeEn:'Present Simple',form:'Вопрос',persons:['He','She','It'],aux:'Does',neg:false,q:true},
+  // PAST SIMPLE
+  {time:'Прошедшее',timeEn:'Past Simple',form:'Утверждение',persons:['I','You','We','They','He','She','It'],aux:'',neg:false,q:false,past:true},
+  {time:'Прошедшее',timeEn:'Past Simple',form:'Отрицание',persons:['I','You','We','They','He','She','It'],aux:'did not',neg:true,q:false},
+  {time:'Прошедшее',timeEn:'Past Simple',form:'Вопрос',persons:['I','You','We','They','He','She','It'],aux:'Did',neg:false,q:true},
+  // FUTURE SIMPLE
+  {time:'Будущее',timeEn:'Future Simple',form:'Утверждение',persons:['I','You','We','They','He','She','It'],aux:'will',neg:false,q:false},
+  {time:'Будущее',timeEn:'Future Simple',form:'Отрицание',persons:['I','You','We','They','He','She','It'],aux:'will not',neg:true,q:false},
+  {time:'Будущее',timeEn:'Future Simple',form:'Вопрос',persons:['I','You','We','They','He','She','It'],aux:'Will',neg:false,q:true},
+];
+
+// Irregular verbs (base -> past simple)
+var IRREGULAR = {
+  'be':'was/were','have':'had','do':'did','go':'went','get':'got',
+  'come':'came','take':'took','make':'made','know':'knew','think':'thought',
+  'see':'saw','give':'gave','find':'found','tell':'told','become':'became',
+  'leave':'left','feel':'felt','put':'put','bring':'brought','begin':'began',
+  'keep':'kept','hold':'held','write':'wrote','stand':'stood','hear':'heard',
+  'let':'let','mean':'meant','set':'set','meet':'met','run':'ran',
+  'pay':'paid','sit':'sat','speak':'spoke','lie':'lay','lead':'led',
+  'read':'read','grow':'grew','lose':'lost','fall':'fell','send':'sent',
+  'build':'built','understand':'understood','draw':'drew','break':'broke',
+  'spend':'spent','cut':'cut','rise':'rose','drive':'drove','buy':'bought',
+  'wear':'wore','choose':'chose','win':'won','catch':'caught','teach':'taught',
+  'fight':'fought','sell':'sold','sleep':'slept','fly':'flew','forget':'forgot',
+  'hide':'hid','hang':'hung','steal':'stole','shoot':'shot','feed':'fed',
+  'forgive':'forgave','shake':'shook','forbid':'forbade','lend':'lent',
+  'overcome':'overcame','flee':'fled','blow':'blew','sing':'sang','hit':'hit',
+  'beat':'beat','hurt':'hurt','cost':'cost','ride':'rode','arise':'arose',
+  'throw':'threw','swim':'swam','wake':'woke','prove':'proved','quit':'quit',
+  'dig':'dug','bite':'bit','swear':'swore','tear':'tore','bend':'bent',
+  'seek':'sought','burn':'burned','spell':'spelled','dream':'dreamed',
+  'deal':'dealt','spread':'spread','arise':'arose','strike':'struck',
+  'withdraw':'withdrew','forbid':'forbade','wind':'wound','shed':'shed'
+};
+
+function getPastForm(verb) {
+  var v = verb.toLowerCase().split(' ')[0];
+  if (IRREGULAR[v]) return IRREGULAR[v];
+  // Regular: add -ed with spelling rules
+  if (v.endsWith('e')) return v + 'd';
+  if (v.match(/[^aeiou]y$/)) return v.slice(0,-1) + 'ied';
+  if (v.match(/[^aeiou][aeiou][^aeioulwx]$/) && v.length <= 7) return v + v.slice(-1) + 'ed';
+  return v + 'ed';
+}
+
+function addS(verb) {
+  var v = verb.toLowerCase().split(' ')[0];
+  if (v.endsWith('s')||v.endsWith('sh')||v.endsWith('ch')||v.endsWith('x')||v.endsWith('o')) return v+'es';
+  if (v.match(/[^aeiou]y$/)) return v.slice(0,-1)+'ies';
+  return v+'s';
+}
+
+function buildSentence(task, verb, person) {
+  var v = verb.e;
+  var base = v.split(' ')[0];
+  var rest = v.split(' ').slice(1).join(' ');
+  var restStr = rest ? ' ' + rest : '';
+
+  if (task.q) {
+    // Question: Aux + person + verb?
+    if (task.time === 'Настоящее') {
+      return task.aux + ' ' + person + ' ' + base + restStr + '?';
+    } else if (task.time === 'Прошедшее') {
+      return 'Did ' + person + ' ' + base + restStr + '?';
+    } else {
+      return 'Will ' + person + ' ' + base + restStr + '?';
+    }
+  } else if (task.neg) {
+    if (task.time === 'Настоящее') {
+      return person + ' ' + task.aux + ' ' + base + restStr + '.';
+    } else if (task.time === 'Прошедшее') {
+      return person + ' did not ' + base + restStr + '.';
+    } else {
+      return person + ' will not ' + base + restStr + '.';
+    }
+  } else {
+    // Affirmative
+    if (task.time === 'Настоящее') {
+      var verbForm = task.s ? addS(base) + restStr : base + restStr;
+      return person + ' ' + verbForm + '.';
+    } else if (task.time === 'Прошедшее') {
+      return person + ' ' + getPastForm(base) + restStr + '.';
+    } else {
+      return person + ' will ' + base + restStr + '.';
+    }
+  }
+}
+
+// ── STATE ────────────────────────────────────────────────────────
+var allWords = ALL.slice();
+var activeFilter = 'all';
+var questions = [];
+var qIdx = 0, correct = 0, totalQ = 0;
+var answered = false;
+var currentAnswer = '';
+var recognition = null;
+var isRecording = false;
+var ROUND = 15;
+
+var FILTERS = [
+  {label:'Все 350', key:'all', from:0, to:350},
+  {label:'1–50',    key:'s1',  from:0, to:50},
+  {label:'51–100',  key:'s2',  from:50,to:100},
+  {label:'101–150', key:'s3',  from:100,to:150},
+  {label:'151–200', key:'s4',  from:150,to:200},
+  {label:'201–250', key:'s5',  from:200,to:250},
+  {label:'251–300', key:'s6',  from:250,to:300},
+  {label:'301–350', key:'s7',  from:300,to:350},
+];
+
+// Build filters
+var fDiv = document.getElementById('filters');
+FILTERS.forEach(function(f){
+  var b = document.createElement('button');
+  b.className = 'flt' + (f.key==='all'?' active':'');
+  b.textContent = f.label;
+  b.addEventListener('click', function(){
+    activeFilter = f.key;
+    document.querySelectorAll('.flt').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    restart();
+  });
+  fDiv.appendChild(b);
+});
+
+function shuffle(a){return a.slice().sort(function(){return Math.random()-0.5;});}
+
+function getPool(){
+  var f = FILTERS.find(function(x){return x.key===activeFilter;});
+  return ALL.slice(f.from, f.to);
+}
+
+function makeQuestions(){
+  var pool = shuffle(getPool()).slice(0, ROUND);
+  var qs = [];
+  pool.forEach(function(word){
+    var task = TASKS[Math.floor(Math.random()*TASKS.length)];
+    var persons = task.persons;
+    var person = persons[Math.floor(Math.random()*persons.length)];
+    var answer = buildSentence(task, word, person);
+    qs.push({word:word, task:task, person:person, answer:answer});
+  });
+  return qs;
+}
+
+function restart(){
+  questions = makeQuestions();
+  qIdx=0; correct=0; totalQ=0; answered=false;
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('taskCard').style.display='block';
+  hideNext();
+  renderQ();
+}
+
+function restartRandom(){
+  activeFilter='all';
+  document.querySelectorAll('.flt').forEach(function(b,i){b.classList.toggle('active',i===0);});
+  restart();
+}
+
+function updStats(){
+  document.getElementById('scorePill').textContent = correct+' / '+totalQ;
+  var pct = totalQ>0?Math.round(correct/totalQ*100):0;
+  document.getElementById('pAcc').textContent = 'Точность: '+pct+'%';
+  document.getElementById('pFill').style.width = (qIdx/questions.length*100)+'%';
+  document.getElementById('pText').textContent = 'Вопрос '+(Math.min(qIdx+1,questions.length))+' из '+questions.length;
+}
+
+function renderQ(){
+  if(qIdx>=questions.length){showResult();return;}
+  var q = questions[qIdx];
+  answered = false;
+  currentAnswer = q.answer;
+
+  // Reset UI
+  var input = document.getElementById('answerInput');
+  input.value=''; input.className='answer-input'; input.disabled=false;
+  document.getElementById('feedback').className='feedback';
+  document.getElementById('speechSection').className='speech-section';
+  document.getElementById('speechResult').textContent='Нажмите 🎤 и произнесите предложение';
+  document.getElementById('speechScore').className='speech-score';
+  document.getElementById('checkBtn').disabled=false;
+  hideNext();
+  updStats();
+
+  // Badges
+  var meta = document.getElementById('taskMeta');
+  meta.innerHTML = '';
+  var badges = [
+    {cls:'badge-time', text: q.task.time+' ('+q.task.timeEn+')'},
+    {cls:'badge-person', text: q.person},
+    {cls:'badge-form', text: q.task.form},
+  ];
+  badges.forEach(function(bd){
+    var s = document.createElement('span');
+    s.className = 'badge '+bd.cls;
+    s.textContent = bd.text;
+    meta.appendChild(s);
+  });
+
+  // Verb
+  document.getElementById('verbEn').textContent = q.word.e;
+  document.getElementById('verbTrans').textContent = q.word.r;
+  document.getElementById('verbHint').textContent = q.word.t;
+
+  // Task description
+  var formMap = {
+    'Утверждение':'утвердительное предложение (+)',
+    'Отрицание':'отрицательное предложение (–)',
+    'Вопрос':'вопросительное предложение (?)'
+  };
+  document.getElementById('taskDesc').innerHTML =
+    'Составьте <strong>'+formMap[q.task.form]+'</strong> в <strong>'+q.task.time+'м времени</strong> с местоимением <strong>'+q.person+'</strong>.';
+
+  setTimeout(function(){input.focus();},300);
+}
+
+function normalizeAnswer(s){
+  return s.toLowerCase()
+    .replace(/['']/g,"'")
+    .replace(/\s+/g,' ')
+    .trim()
+    .replace(/[.?!]$/,'');
+}
+
+function checkAnswer(){
+  if(answered)return;
+  var input = document.getElementById('answerInput');
+  var val = input.value.trim();
+  if(!val)return;
+
+  answered = true;
+  totalQ++;
+  document.getElementById('checkBtn').disabled=true;
+  input.disabled=true;
+
+  var userN = normalizeAnswer(val);
+  var corrN = normalizeAnswer(currentAnswer);
+  var isOk = userN === corrN;
+
+  if(isOk) correct++;
+
+  var fb = document.getElementById('feedback');
+  if(isOk){
+    input.classList.add('ok');
+    fb.className='feedback ok show';
+    fb.innerHTML='✅ Правильно!<div class="correct-ans">'+currentAnswer+'</div>';
+  } else {
+    input.classList.add('err');
+    fb.className='feedback err show';
+    fb.innerHTML='❌ Неверно. Правильный ответ:<div class="correct-ans">'+currentAnswer+'</div>';
+  }
+
+  // Show speech section
+  document.getElementById('speechSection').classList.add('show');
+  showNext();
+  updStats();
+}
+
+function skipQ(){
+  if(answered)return;
+  answered=true; totalQ++;
+  document.getElementById('answerInput').disabled=true;
+  document.getElementById('checkBtn').disabled=true;
+  var fb=document.getElementById('feedback');
+  fb.className='feedback err show';
+  fb.innerHTML='⏭ Пропущено. Правильный ответ:<div class="correct-ans">'+currentAnswer+'</div>';
+  document.getElementById('speechSection').classList.add('show');
+  showNext();
+  updStats();
+}
+
+function showNext(){
+  document.getElementById('nextBtn').classList.add('show');
+  document.getElementById('spacer').classList.add('show');
+}
+function hideNext(){
+  document.getElementById('nextBtn').classList.remove('show');
+  document.getElementById('spacer').classList.remove('show');
+}
+
+function nextQ(){qIdx++;renderQ();}
+
+// ── SPEECH SYNTHESIS ─────────────────────────────────────────────
+function speakSentence(){
+  if(!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  var text = currentAnswer.replace(/[.?!]/g,'');
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang='en-US'; u.rate=0.8; u.volume=1; u.pitch=1;
+  window.speechSynthesis.speak(u);
+}
+// Preload voices as soon as possible
+if(window.speechSynthesis){
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = function(){
+    window.speechSynthesis.getVoices(); // cache voices
+  };
+}
+// Unlock audio on first tap (required by iOS)
+document.addEventListener('touchend', function warmup(){
+  if(window.speechSynthesis){
+    var u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+  }
+  document.removeEventListener('touchend', warmup);
+}, {once:true, passive:true});
+
+// ── SPEECH RECOGNITION ───────────────────────────────────────────
+function initRecognition(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById('micBtn').textContent='🚫 Нет микрофона';
+    document.getElementById('micBtn').disabled=true;
+    return null;
+  }
+  var r = new SR();
+  r.lang='en-US'; r.continuous=false; r.interimResults=true; r.maxAlternatives=3;
+  r.onstart=function(){
+    isRecording=true;
+    document.getElementById('micBtn').textContent='⏹ Остановить';
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('speechResult').textContent='Слушаю...';
+    document.getElementById('speechScore').className='speech-score';
+  };
+  r.onresult=function(e){
+    var interim='', final='';
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    document.getElementById('speechResult').textContent = final||interim||'...';
+    if(final) evaluateSpeech(final);
+  };
+  r.onerror=function(e){
+    document.getElementById('speechResult').textContent='Ошибка: '+e.error;
+    stopRec();
+  };
+  r.onend=function(){ stopRec(); };
+  return r;
+}
+
+function stopRec(){
+  isRecording=false;
+  var btn=document.getElementById('micBtn');
+  btn.textContent='🎤 Ещё раз';
+  btn.classList.remove('recording');
+}
+
+function toggleMic(){
+  if(!recognition) recognition=initRecognition();
+  if(!recognition)return;
+  if(isRecording){recognition.stop();}
+  else{
+    document.getElementById('speechScore').className='speech-score';
+    try{recognition.start();}catch(e){recognition=initRecognition();recognition.start();}
+  }
+}
+
+function evaluateSpeech(spoken){
+  var spokenN = normalizeAnswer(spoken);
+  var targetN = normalizeAnswer(currentAnswer);
+  // Word-level similarity
+  var spWords = spokenN.split(' ');
+  var tgWords = targetN.split(' ');
+  var matched = 0;
+  tgWords.forEach(function(w){
+    if(spWords.indexOf(w)!==-1) matched++;
+  });
+  var pct = Math.round(matched/tgWords.length*100);
+
+  var sc=document.getElementById('speechScore');
+  sc.classList.add('show');
+  if(pct>=90){
+    sc.className='speech-score show great';
+    sc.textContent='🔥 Отлично! '+pct+'% совпадение';
+  } else if(pct>=60){
+    sc.className='speech-score show ok-score';
+    sc.textContent='👍 Неплохо! '+pct+'% совпадение';
+  } else {
+    sc.className='speech-score show bad';
+    sc.textContent='💪 Попробуйте ещё! '+pct+'% совпадение';
+  }
+  document.getElementById('speechResult').textContent='"'+spoken+'"';
+}
+
+// ── EVENT LISTENERS ──────────────────────────────────────────────
+document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+document.getElementById('skipBtn').addEventListener('click', skipQ);
+document.getElementById('nextBtn').addEventListener('click', nextQ);
+document.getElementById('micBtn').addEventListener('click', toggleMic);
+document.getElementById('listenBtn').addEventListener('click', function(){
+  // Stop mic if recording
+  if(isRecording && recognition){ recognition.stop(); }
+
+  // Small delay to release mic before speaking
+  setTimeout(function(){
+    if(!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    var text = currentAnswer.replace(/[.?!]/g,'');
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.8; u.volume=1; u.pitch=1;
+
+    // iOS: try to find en-US voice explicitly
+    var voices = window.speechSynthesis.getVoices();
+    var enVoice = null;
+    for(var i=0;i<voices.length;i++){
+      if(voices[i].lang==='en-US'){ enVoice=voices[i]; break; }
+    }
+    if(!enVoice){
+      for(var j=0;j<voices.length;j++){
+        if(voices[j].lang.indexOf('en')===0){ enVoice=voices[j]; break; }
+      }
+    }
+    if(enVoice) u.voice = enVoice;
+    window.speechSynthesis.speak(u);
+  }, isRecording ? 400 : 0);
+});
+document.getElementById('answerInput').addEventListener('keydown', function(e){
+  if(e.key==='Enter') checkAnswer();
+});
+
+function showResult(){
+  document.getElementById('taskCard').style.display='none';
+  hideNext();
+  var pct=totalQ>0?Math.round(correct/totalQ*100):0;
+  document.getElementById('rScore').textContent=correct+'/'+totalQ;
+  document.getElementById('rEmoji').textContent=pct>=80?'🔥':pct>=60?'👍':'💪';
+  document.getElementById('rMsg').textContent=
+    pct>=80?'Превосходный результат!':
+    pct>=60?'Хороший результат, продолжайте!':
+    'Не сдавайтесь — повторите ещё раз!';
+  document.getElementById('result').classList.add('show');
+}
+
+restart();
+</script>
+</body>
+</html>
